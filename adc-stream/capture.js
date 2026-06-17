@@ -59,13 +59,18 @@ async function shot(page, name) {
   // ASP.NET ids first, then generic fallbacks.
   const userSel = '#ctl00_ContentPlaceHolder1_loginform_txtUserName, input[name*="UserName"], input[type="email"], #txtUsername';
   const passSel = '#txtPassword, input[name*="Password"], input[type="password"]';
-  const submitSel = '#ctl00_ContentPlaceHolder1_loginform_signInButton, button[type="submit"], input[type="submit"], #btnLogin';
+  const submitSel = '#signInButton, input[name$="signInButton"]';
   try {
     await page.fill(userSel, creds.username, { timeout: 15000 });
     await page.fill(passSel, creds.password, { timeout: 15000 });
     await shot(page, '02-filled');
-    await page.click(submitSel, { timeout: 15000 });
-    await page.waitForLoadState('networkidle', { timeout: 45000 }).catch(() => {});
+    // Cookie banner can overlay the button; dismiss if present.
+    await page.click('#acceptCookies', { timeout: 3000 }).catch(() => {});
+    await Promise.all([
+      page.waitForURL((u) => !String(u).includes('login.aspx'), { timeout: 45000 }).catch(() => {}),
+      page.click(submitSel, { timeout: 15000 }),
+    ]);
+    await page.waitForLoadState('networkidle', { timeout: 30000 }).catch(() => {});
   } catch (e) {
     log('LOGIN step failed (selectors may need updating):', e.message);
     await shot(page, '02-login-error');
