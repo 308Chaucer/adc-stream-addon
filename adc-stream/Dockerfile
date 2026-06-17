@@ -13,6 +13,15 @@ RUN apt-get update \
  && chmod +x /usr/local/bin/go2rtc \
  && rm -rf /var/lib/apt/lists/*
 
+# Real Google Chrome (has H.264; Playwright's bundled Chromium does not — required to
+# decode Alarm.com's WebRTC video streams).
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends wget gnupg \
+ && wget -qO- https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /usr/share/keyrings/google-chrome.gpg \
+ && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome.gpg] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list \
+ && apt-get update && apt-get install -y --no-install-recommends google-chrome-stable \
+ && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 COPY package.json ./
 RUN npm install --omit=dev

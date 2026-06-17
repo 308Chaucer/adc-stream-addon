@@ -36,6 +36,7 @@ async function shot(page, name) {
 
   const browser = await chromium.launch({
     headless: true,
+    channel: 'chrome', // real Google Chrome — has H.264 (bundled Chromium does not), needed for ADC WebRTC
     args: ['--no-sandbox', '--disable-dev-shm-usage', '--autoplay-policy=no-user-gesture-required'],
   });
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 } });
@@ -90,18 +91,26 @@ async function shot(page, name) {
 
   // Navigate to the video / live-view area. Exact URL/SPA route is account-specific;
   // adjust after reviewing 04-video screenshot.
-  log('navigating to video page');
-  await page.goto('https://www.alarm.com/web/system/video/CameraView.aspx',
-    { waitUntil: 'domcontentloaded', timeout: 45000 }).catch(e => log('video nav err:', e.message));
-  await page.waitForTimeout(6000);
-  await shot(page, '04-video');
-  log('video url:', page.url());
-
+  log('navigating to video page (clicking Video nav)');
   try {
-    const labels = await page.$$eval('[aria-label], .camera-name, [class*="camera"], video',
-      els => els.slice(0, 50).map(e => (e.getAttribute && e.getAttribute('aria-label')) || e.className || e.tagName));
-    log('candidate camera elements:', JSON.stringify(labels));
-  } catch (e) { log('label scan failed:', e.message); }
+    await page.getByRole('link', { name: 'Video', exact: true }).click({ timeout: 15000 });
+  } catch (e) {
+    log('Video nav role-click failed, trying text selector:', e.message);
+    await page.click('text="Video"', { timeout: 10000 }).catch((ee) => log('video nav fallback failed:', ee.message));
+  }
+  async function probe(tag) {
+    try {
+      const vids = await page.$$eval('video', vs => vs.map(v => ({ w: v.videoWidth, h: v.videoHeight, ready: v.readyState, paused: v.paused })));
+      log(tag, 'VIDEO elements:', JSON.stringify(vids));
+    } catch (e) { log(tag, 'video probe failed:', e.message); }
+  }
+  await page.waitForTimeout(20000);
+  await probe('after-20s');
+  await shot(page, '04a-video-20s');
+  await page.waitForTimeout(20000);
+  await shot(page, '04-video');
+  await probe('after-40s');
+  log('final url:', page.url());
 
   if (DEBUG) {
     log('DEBUG run complete. Review screenshots in', SHOT_DIR, '— then set debug:false + camera_name.');
