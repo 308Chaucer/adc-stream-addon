@@ -1,0 +1,22 @@
+# amd64 only. Uses Microsoft's Playwright image so Chromium + all its system
+# libs are already present and version-matched (avoids the dependency hell that
+# killed the in-sandbox attempt). We add ffmpeg, jq and the go2rtc binary.
+FROM mcr.microsoft.com/playwright:v1.49.0-jammy
+
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 \
+    NODE_ENV=production
+
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends ffmpeg jq curl ca-certificates \
+ && curl -fsSL -o /usr/local/bin/go2rtc \
+      https://github.com/AlexxIT/go2rtc/releases/latest/download/go2rtc_linux_amd64 \
+ && chmod +x /usr/local/bin/go2rtc \
+ && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+COPY package.json ./
+RUN npm install --omit=dev
+COPY capture.js stream.sh run.sh go2rtc.yaml ./
+RUN chmod +x stream.sh run.sh
+
+CMD ["./run.sh"]

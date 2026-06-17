@@ -1,0 +1,9 @@
+{
+  "name": "adc-stream",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Headless ADC camera capture for go2rtc (PoC)",
+  "dependencies": {
+    "playwright": "1.49.0"
+  }
+}

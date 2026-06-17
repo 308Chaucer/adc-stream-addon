@@ -1,0 +1,9 @@
+log:
+  level: info
+api:
+  listen: ":1984"
+rtsp:
+  listen: ":8554"
+streams:
+  # go2rtc runs stream.sh and substitutes {output} with an internal RTSP URL it hosts.
+  adc_poc: exec:/app/stream.sh {output}

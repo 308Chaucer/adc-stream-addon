@@ -1,0 +1,26 @@
+name: "ADC Camera Stream (PoC)"
+version: "0.1.0"
+slug: adc_stream
+description: >-
+  Proof-of-concept: capture an Alarm.com (cloud-WebRTC) camera via a headless
+  Chromium session and republish it via go2rtc as RTSP/WebRTC for Home Assistant.
+arch:
+  - amd64
+init: false
+hassio_api: false
+homeassistant_api: false
+map:
+  - homeassistant_config:ro
+  - share:rw
+ports:
+  "1984/tcp": 1984
+  "8554/tcp": 8554
+ports_description:
+  "1984/tcp": "go2rtc API / WebRTC / HLS"
+  "8554/tcp": "go2rtc RTSP"
+options:
+  camera_name: ""
+  debug: true
+schema:
+  camera_name: "str?"
+  debug: "bool"
